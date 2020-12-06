@@ -1,0 +1,15 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    coque (0.7.1)
+    rgeo (2.2.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  coque
+  rgeo
+
+BUNDLED WITH
+   2.0.2
