@@ -30,21 +30,26 @@ target gj_file do |f|
     .run!
 end
 
-levels = [2,3,4]
+levels = ['country', 'state']
 COORD_LIMIT = 2000
 
 levels.each do |level|
-  target "./output/#{region}_level_#{level}.geojsonseq" do |target|
+  target "./output/#{region}_#{level}.geojsonseq" do |target|
     File.open(target, "w") do |f|
       File.readlines(gj_file).each do |line|
         row = JSON.parse(line)
-        if row['properties']['admin_level'] != level
+        if row['properties']['zone_type'] != level
           next
         end
 
         if row['properties']['coord_count'] <= COORD_LIMIT
           row['properties'].delete('center_tags')
           row['properties'].delete('international_labels')
+          row['properties']['tags'].each do |k,v|
+            if k.include?("ISO3166")
+              row['properties'][k] = v
+            end
+          end
           row['properties'].delete('tags')
           f.puts(row.to_json)
         else
