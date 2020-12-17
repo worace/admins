@@ -6,13 +6,6 @@ require 'coque'
 
 PLANET_PBF = '/storage/data/osm/planet-latest.osm.pbf'
 
-def target(file)
-  if !File.exist?(file)
-    puts "building #{file}"
-    yield file
-  end
-end
-
 def export_admin_level(level, output)
   tempfile = "/tmp/filtered_admin_level_#{level}.pbf"
   Coque['osmium', 'tags-filter', '-o', tempfile,
