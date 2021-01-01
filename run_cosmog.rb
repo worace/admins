@@ -3,9 +3,22 @@ require 'coque'
 require 'json'
 
 # e.g. '/storage/data/cosmogony/north-america.jsonl'
-cosmog_file = ARGV[0]
-region = File.basename(cosmog_file, ".*")
-gj_file = "./output/#{region}.geojsonseq"
+# e.g. 'central-america', 'africa', 'etc'
+region = ARGV[0]
+# cosmog_file = ARGV[0]
+
+source_pbf = "/storage/data/osm/#{region}-latest.osm.pbf"
+cosmog_file = "/storage/data/cosmogony/#{region}.jsonl"
+
+
+target cosmog_file do |f|
+  Coque['cosmogony', 'generate',
+        '-i', source_pbf,
+        '-o', cosmog_file]
+    .out(STDOUT).err(STDERR).run!
+end
+
+# region = File.basename(cosmog_file, ".*")
 
 pv = Coque['pv']
 
@@ -20,6 +33,7 @@ end
 simplify = Coque['geoq', 'simplify', '--to-coord-count', 2000, 0.000001]
 coord_count = Coque['geoq', 'measure', 'coord-count', '--geojson']
 
+gj_file = "./output/#{region}.geojsonseq"
 target gj_file do |f|
   Coque['cat', cosmog_file]
     .pipe(pv)
