@@ -31,7 +31,7 @@ to_geojson = Coque.rb do |line|
   puts gj.to_json
 end
 
-simplify = Coque['geoq', 'simplify', '--to-coord-count', 2000, 0.000001]
+simplify = Coque['geoq', 'simplify', '--to-coord-count', 2000, 0.00000001]
 coord_count = Coque['geoq', 'measure', 'coord-count', '--geojson']
 
 gj_file = File.join(output_dir, "#{region}.geojsonseq")
