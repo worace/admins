@@ -9,6 +9,7 @@ region = ARGV[0]
 
 source_pbf = "/storage/data/osm/#{region}-latest.osm.pbf"
 cosmog_file = "/storage/data/cosmogony/#{region}.jsonl"
+output_dir = '/storage/data/cosmogony/gen'
 
 
 target cosmog_file do |f|
@@ -33,7 +34,7 @@ end
 simplify = Coque['geoq', 'simplify', '--to-coord-count', 2000, 0.000001]
 coord_count = Coque['geoq', 'measure', 'coord-count', '--geojson']
 
-gj_file = "./output/#{region}.geojsonseq"
+gj_file = File.join(output_dir, "#{region}.geojsonseq")
 target gj_file do |f|
   Coque['cat', cosmog_file]
     .pipe(pv)
@@ -44,11 +45,11 @@ target gj_file do |f|
     .run!
 end
 
-levels = ['country', 'state']
+levels = ['country', 'state', 'city']
 COORD_LIMIT = 2000
 
 levels.each do |level|
-  target "./output/#{region}_#{level}.geojsonseq" do |target|
+  target File.join(output_dir, "#{region}_#{level}.geojsonseq") do |target|
     File.open(target, "w") do |f|
       File.readlines(gj_file).each do |line|
         row = JSON.parse(line)
