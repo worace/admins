@@ -19,8 +19,6 @@ target cosmog_file do |f|
     .out(STDOUT).err(STDERR).run!
 end
 
-# region = File.basename(cosmog_file, ".*")
-
 pv = Coque['pv']
 
 to_geojson = Coque.rb do |line|
@@ -48,30 +46,41 @@ end
 levels = ['country', 'state', 'city']
 COORD_LIMIT = 2000
 
+def format_and_output_row(row, file)
+  if row['properties']['coord_count'] <= COORD_LIMIT
+    row['properties'].delete('center_tags')
+    row['properties'].delete('international_labels')
+    row['properties']['tags'].each do |k,v|
+      if k.include?("ISO3166")
+        row['properties'][k] = v
+      end
+    end
+    row['properties'].delete('tags')
+    file.puts(row.to_json)
+  else
+    name = row['properties']['name']
+    id = row['properties']['osm_id']
+    count = row['properties']['coord_count']
+    STDERR.puts("Relation #{name} (#{id}) is over 2k coord limit at #{count}")
+  end
+end
+
 levels.each do |level|
   target File.join(output_dir, "#{region}_#{level}.geojsonseq") do |target|
+    generated_target = File.join(output_dir, "#{region}_#{level}_generated.geojsonseq")
     File.open(target, "w") do |f|
-      File.readlines(gj_file).each do |line|
-        row = JSON.parse(line)
-        if row['properties']['zone_type'] != level
-          next
-        end
-
-        if row['properties']['coord_count'] <= COORD_LIMIT
-          row['properties'].delete('center_tags')
-          row['properties'].delete('international_labels')
-          row['properties']['tags'].each do |k,v|
-            if k.include?("ISO3166")
-              row['properties'][k] = v
-            end
+      File.open(generated_target, "w") do |generated_f|
+        File.readlines(gj_file).map do |line|
+          JSON.parse(line)
+        end.select do |row|
+          row['properties']['zone_type'] == level
+        end.each do |row|
+          if row['properties']['is_generated']
+            puts("got generated row, writing to #{generated_f}")
+            format_and_output_row(row, generated_f)
+          else
+            format_and_output_row(row, f)
           end
-          row['properties'].delete('tags')
-          f.puts(row.to_json)
-        else
-          name = row['properties']['name']
-          id = row['properties']['osm_id']
-          count = row['properties']['coord_count']
-          STDERR.puts("Relation #{name} (#{id}) is over 2k coord limit at #{count}")
         end
       end
     end
